@@ -38,18 +38,56 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Faint schematic grid across the whole page */
+/* ------------------------------------------------------------
+   Layered console backdrop (bottom to top):
+   1. body::before — schematic grid, masked so it fades with depth
+   2. .bg-aurora   — soft brand-color glows, drifting very slowly
+   3. body::after  — film grain, kills banding and adds texture
+   ------------------------------------------------------------ */
+
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
-  background-image:
-    linear-gradient(var(--text-primary) 1px, transparent 1px),
-    linear-gradient(90deg, var(--text-primary) 1px, transparent 1px);
-  background-size: 48px 48px;
-  opacity: 0.04;
   pointer-events: none;
+  background-image:
+    linear-gradient(rgba(231, 235, 243, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(231, 235, 243, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(120% 110% at 50% 0%, #000 35%, rgba(0, 0, 0, 0.45) 70%, rgba(0, 0, 0, 0.12) 100%);
+  mask-image: radial-gradient(120% 110% at 50% 0%, #000 35%, rgba(0, 0, 0, 0.45) 70%, rgba(0, 0, 0, 0.12) 100%);
+}
+
+.bg-aurora {
+  position: fixed;
+  inset: -12%;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(52% 42% at 76% 6%, rgba(53, 199, 183, 0.10), transparent 64%),
+    radial-gradient(46% 40% at 2% 44%, rgba(93, 118, 255, 0.07), transparent 62%),
+    radial-gradient(40% 34% at 52% 98%, rgba(242, 169, 59, 0.05), transparent 66%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bg-aurora {
+    will-change: transform;
+    animation: auroraDrift 36s ease-in-out infinite alternate;
+  }
+}
+@keyframes auroraDrift {
+  from { transform: translate3d(-1.5%, -1%, 0) scale(1); }
+  to   { transform: translate3d(1.5%, 1.2%, 0) scale(1.06); }
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
 }
 
 ::selection { background: rgba(53, 199, 183, 0.28); }
@@ -162,7 +200,12 @@ a, button { touch-action: manipulation; }
    Shared primitives
    ============================================================ */
 
-.section { padding: 88px 0; border-top: 1px solid rgba(42, 51, 72, 0.45); }
+.section {
+  padding: 88px 0;
+  border-top: 1px solid rgba(42, 51, 72, 0.45);
+  /* Hairline dividers glow faintly teal at their center */
+  border-image: linear-gradient(90deg, transparent, rgba(42, 51, 72, 0.9) 18%, rgba(53, 199, 183, 0.3) 50%, rgba(42, 51, 72, 0.9) 82%, transparent) 1;
+}
 .section[id], section[id] { scroll-margin-top: calc(var(--taskbar-h) + 16px); }
 
 .kicker {
@@ -273,9 +316,10 @@ a, button { touch-action: manipulation; }
   padding: 13px 20px;
   border-radius: 3px;
   border: 1px solid transparent;
-  transition: filter 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+  transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(var(--s, 1));
+  transition: filter 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.18s ease;
 }
-.btn:active { transform: scale(0.97); }
+.btn:active { --s: 0.97; }
 .btn-primary { background: var(--accent-growth); color: #07110F; }
 .btn-primary:hover { filter: brightness(1.08); }
 .btn-ghost { border-color: var(--border); color: var(--text-primary); background: transparent; }
@@ -343,7 +387,7 @@ a, button { touch-action: manipulation; }
   /* Hero rises in on load, staggered top to bottom */
   .hero-copy > * { animation: riseIn 0.55s var(--ease-out) both; }
   .hero-copy > *:nth-child(1) { animation-delay: 0.05s; }
-  .hero-copy > *:nth-child(2) { animation-delay: 0.12s; }
+  .hero-copy > *:nth-child(2) { animation-delay: 0.12s, 0.7s; } /* 2nd value delays the h1 shine */
   .hero-copy > *:nth-child(3) { animation-delay: 0.19s; }
   .hero-copy > *:nth-child(4) { animation-delay: 0.26s; }
   .hero-copy > *:nth-child(5) { animation-delay: 0.33s; }
@@ -406,8 +450,30 @@ h1 {
   line-height: 1.08;
   letter-spacing: -0.02em;
   margin-bottom: 20px;
+  /* Duotone "metal" gradient on the first line; .h1-sub paints its own color */
+  color: transparent;
+  background-image: linear-gradient(180deg, #F4F7FD 0%, #E7EBF3 52%, #9AA5BE 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 .h1-sub { color: #B9C1D4; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* One-time shine sweep across the headline after load.
+     Combined with riseIn because .hero-copy > * would otherwise win the cascade. */
+  .hero-copy > h1 {
+    background-image:
+      linear-gradient(110deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 58%),
+      linear-gradient(180deg, #F4F7FD 0%, #E7EBF3 52%, #9AA5BE 100%);
+    background-size: 240% 100%, 100% 100%;
+    background-repeat: no-repeat;
+    animation: riseIn 0.55s var(--ease-out) both, h1Shine 1.6s var(--ease-out) both;
+  }
+}
+@keyframes h1Shine {
+  from { background-position: 200% 0, 0 0; }
+  to   { background-position: -140% 0, 0 0; }
+}
 
 .subhead {
   font-size: 1.1rem;
@@ -801,3 +867,245 @@ html.js .funnel:not(.inview) .funnel-bar { width: 0; }
   .type-caret { display: none; }
   .card:hover { transform: none; }
 }
+
+/* ============================================================
+   Console upgrades: scrollbar, scrollspy, spotlight,
+   command palette, footer status line
+   ============================================================ */
+
+/* Themed scrollbar */
+html { scrollbar-width: thin; scrollbar-color: #2A3348 #0E1420; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover { background: #3A4560; }
+
+/* Scrollspy — current section lights up in the taskbar */
+.tasknav a.active {
+  color: var(--accent-growth);
+  background: rgba(53, 199, 183, 0.08);
+}
+
+/* Cursor spotlight on cards (fine pointers only) */
+@media (hover: hover) and (pointer: fine) {
+  .card { position: relative; overflow: hidden; }
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    background: radial-gradient(
+      220px circle at var(--mx, 50%) var(--my, 50%),
+      rgba(53, 199, 183, 0.09),
+      transparent 70%
+    );
+  }
+  .card:hover::after { opacity: 1; }
+}
+
+/* kbd chips */
+kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: rgba(42, 51, 72, 0.5);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  padding: 2px 5px;
+}
+
+/* Taskbar palette trigger */
+.cmdk-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  padding: 5px 9px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.cmdk-btn:hover { color: var(--accent-growth); border-color: rgba(53, 199, 183, 0.4); }
+
+/* Command palette */
+.cmdk-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 14vh 16px 16px;
+  background: rgba(8, 12, 20, 0.6);
+  backdrop-filter: blur(4px);
+}
+.cmdk-backdrop[hidden] { display: none; }
+.cmdk {
+  width: min(560px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cmdk { animation: cmdkIn 0.18s var(--ease-out); }
+}
+@keyframes cmdkIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+}
+.cmdk-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.cmdk-prompt {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent-growth);
+}
+#cmdkInput {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  letter-spacing: 0.02em;
+}
+#cmdkInput::placeholder { color: var(--text-muted); opacity: 0.7; }
+.cmdk-list {
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px;
+}
+.cmdk-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.cmdk-list li.active { background: rgba(53, 199, 183, 0.1); }
+.cmdk-verb { color: var(--text-muted); }
+.cmdk-list li.active .cmdk-verb { color: var(--accent-growth); }
+.cmdk-empty {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 18px 16px;
+}
+.cmdk-foot {
+  display: flex;
+  gap: 16px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+.cmdk-foot span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Footer status line */
+.footer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.footer-status .live-dot { width: 6px; height: 6px; }
+#sysClock { color: var(--accent-growth); font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   Premium pass: border beam, console ticker, hero tilt
+   ============================================================ */
+
+/* Animated beam tracing the hero loop panel's border */
+@property --beam-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.loop-panel { position: relative; }
+.loop-panel::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius);
+  padding: 1px;
+  background: conic-gradient(
+    from var(--beam-angle),
+    transparent 0deg,
+    transparent 288deg,
+    rgba(53, 199, 183, 0.85) 326deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .loop-panel::before { animation: beamSpin 8s linear infinite; }
+}
+@keyframes beamSpin { to { --beam-angle: 360deg; } }
+
+/* Console ticker */
+.ticker {
+  overflow: hidden;
+  border-top: 1px solid rgba(42, 51, 72, 0.45);
+  padding: 13px 0;
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+}
+.ticker-half {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding-right: 28px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ticker-track { animation: tickerScroll 36s linear infinite; }
+  .ticker:hover .ticker-track { animation-play-state: paused; }
+}
+@keyframes tickerScroll { to { transform: translateX(-50%); } }
+.ticker-item {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: lowercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.ticker-sep {
+  color: var(--accent-growth);
+  font-size: 8px;
+  opacity: 0.7;
+}
+
+/* Hero visual tilts gently toward the cursor (set by main.js) */
+.hero-visual { transition: transform 0.25s ease; }
