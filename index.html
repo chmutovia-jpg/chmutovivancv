@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="bg-aurora" aria-hidden="true"></div>
   <a class="skip-link" href="#main">Skip to content</a>
 
   <!-- 0. Header / console taskbar -->
@@ -32,6 +33,7 @@
       <a href="#thinking">Thinking</a>
       <a href="#contact">Contact</a>
     </nav>
+    <button type="button" class="cmdk-btn" id="cmdkBtn" aria-haspopup="dialog" aria-label="Open quick navigation (Ctrl+K)">Ctrl K</button>
     <div class="scroll-progress" aria-hidden="true"></div>
   </header>
 
@@ -90,6 +92,36 @@
         </div>
       </div>
     </section>
+
+    <!-- Console ticker -->
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        <div class="ticker-half">
+          <span class="ticker-item">conversion systems</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">retention loops</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">FTD / LTV / GGR</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">KYC flows</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">AI-native MVPs</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">bonus economics</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">risk vs growth</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">user lifecycle</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">product specs</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">n8n automation</span><span class="ticker-sep">◆</span>
+        </div>
+        <div class="ticker-half">
+          <span class="ticker-item">conversion systems</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">retention loops</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">FTD / LTV / GGR</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">KYC flows</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">AI-native MVPs</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">bonus economics</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">risk vs growth</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">user lifecycle</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">product specs</span><span class="ticker-sep">◆</span>
+          <span class="ticker-item">n8n automation</span><span class="ticker-sep">◆</span>
+        </div>
+      </div>
+    </div>
 
     <!-- 2. Quick positioning -->
     <section class="section positioning" aria-labelledby="positioning-lead">
@@ -364,7 +396,7 @@
     </section>
 
     <!-- 9. Education & languages -->
-    <section class="section" aria-labelledby="edu-title">
+    <section class="section" id="education" aria-labelledby="edu-title">
       <div class="wrap">
         <p class="kicker"><span class="knum">08</span> // education &amp; languages</p>
         <h2 class="sec-title" id="edu-title">Education &amp; Languages</h2>
@@ -413,9 +445,33 @@
   <footer class="site-footer">
     <div class="wrap footer-row">
       <span>© 2026 Ivan Chmutov</span>
+      <span class="footer-status"><i class="live-dot" aria-hidden="true"></i>status: open_to_roles · <span id="sysClock">--:--:--</span></span>
       <span>System Builder Portfolio</span>
     </div>
   </footer>
+
+  <!-- Command palette (Ctrl/⌘ + K) -->
+  <div class="cmdk-backdrop" id="cmdk" hidden>
+    <div class="cmdk" role="dialog" aria-modal="true" aria-label="Quick navigation">
+      <div class="cmdk-head">
+        <span class="cmdk-prompt" aria-hidden="true">&gt;_</span>
+        <input id="cmdkInput" type="text" placeholder="type a command or search…" autocomplete="off" spellcheck="false"
+               role="combobox" aria-expanded="true" aria-controls="cmdkList" aria-autocomplete="list" />
+        <kbd>esc</kbd>
+      </div>
+      <ul class="cmdk-list" id="cmdkList" role="listbox" aria-label="Commands">
+        <li role="option" aria-selected="false" data-action="#work"><span class="cmdk-verb">goto:</span> work — what I do</li>
+        <li role="option" aria-selected="false" data-action="#cases"><span class="cmdk-verb">goto:</span> cases — case studies</li>
+        <li role="option" aria-selected="false" data-action="#thinking"><span class="cmdk-verb">goto:</span> thinking — product thinking</li>
+        <li role="option" aria-selected="false" data-action="#education"><span class="cmdk-verb">goto:</span> education &amp; languages</li>
+        <li role="option" aria-selected="false" data-action="#contact"><span class="cmdk-verb">goto:</span> contact</li>
+        <li role="option" aria-selected="false" data-action="https://t.me/olenmukava"><span class="cmdk-verb">open:</span> telegram ↗</li>
+        <li role="option" aria-selected="false" data-action="copy"><span class="cmdk-verb">copy:</span> page url</li>
+      </ul>
+      <p class="cmdk-empty" id="cmdkEmpty" hidden>no matches — try "cases" or "telegram"</p>
+      <div class="cmdk-foot"><span><kbd>↑↓</kbd> navigate</span><span><kbd>↵</kbd> run</span><span><kbd>esc</kbd> close</span></div>
+    </div>
+  </div>
 
   <script src="main.js"></script>
 </body>
